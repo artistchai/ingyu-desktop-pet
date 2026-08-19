@@ -9,6 +9,11 @@ on:
   # 태그 없이도 수동으로 실행해서 빌드만 테스트해보고 싶을 때 사용 (Actions 탭에서 "Run workflow" 버튼으로 실행)
   workflow_dispatch:
 
+# GITHUB_TOKEN이 기본적으로 읽기 전용이라, Release를 새로 생성/업로드하려면
+# contents: write 권한을 명시적으로 허용해줘야 함 (안 그러면 403 에러 발생)
+permissions:
+  contents: write
+
 jobs:
   build:
     strategy:
