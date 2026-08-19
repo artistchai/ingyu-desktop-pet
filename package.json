@@ -35,10 +35,7 @@
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "renderer/assets/icon.icns",
-      "hardenedRuntime": true,
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
-      "target": [       
+      "target": [      
         {
           "target": "dmg",
           "arch": [
