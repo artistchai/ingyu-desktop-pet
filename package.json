@@ -13,11 +13,10 @@
   },
   "devDependencies": {
     "electron": "31.6.0",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^26.15.3"
   },
   "dependencies": {
-    "three": "^0.165.0",
-    "uiohook-napi": "^1.5.4"
+    "three": "^0.165.0"
   },
   "build": {
     "appId": "com.chai.ingyu-desktop-pet",
@@ -35,7 +34,7 @@
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "renderer/assets/icon.icns",
-      "target": [      
+      "target": [
         {
           "target": "dmg",
           "arch": [

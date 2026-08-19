@@ -686,7 +686,7 @@ loader.load(
 // 이불+베개 — sleep일 때만 보이게, 평소엔 숨겨둠.
 // character.glb와 마찬가지로 원본 GLB 크기가 크기 때문에 CHARACTER_SCALE을 그대로 적용.
 loader.load(
-  '../assets/bedding+pillow.glb',
+    '../assets/bedding_pillow.glb',
   (gltf) => {
     beddingRoot = gltf.scene;
     beddingRoot.visible = false;
