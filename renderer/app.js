@@ -938,10 +938,7 @@ loader.load(
 );
 // ============================
 
-// ===== 마우스 커서 쳐다보기 기능은 제거됨 =====
-// (uiohook-napi가 macOS 보안 시스템에 "악성코드 행동 패턴(입력 후킹)"으로 오탐되어
-// 배포된 앱이 자동 삭제되는 문제가 있어 기능 자체를 뺐음. 이제 인규는 항상 정면을 봄 —
-// 작업 중 자세(POSES)에서 고개를 돌리는 동작은 그대로 남아있음.)
+// ===== 마우스 커서 쳐다보기 (전역 입력) =====
 let targetYawDeg = 0;
 let targetPitchDeg = 0;
 
@@ -949,6 +946,19 @@ const LOOK_MAX_YAW_DEG = 40;
 const LOOK_MAX_PITCH_DEG = 24;
 const LOOK_SMOOTH = 6;
 const ROLL_SMOOTH = 2;
+
+if (window.electronAPI && window.electronAPI.onGlobalMouseMove) {
+  window.electronAPI.onGlobalMouseMove((pos) => {
+    const localX = pos.x - window.screenX;
+    const localY = pos.y - window.screenY;
+
+    const nx = THREE.MathUtils.clamp((localX / window.innerWidth) * 2 - 1, -1, 1);
+    const ny = THREE.MathUtils.clamp((localY / window.innerHeight) * 2 - 1, -1, 1);
+
+    targetYawDeg = nx * LOOK_MAX_YAW_DEG;
+    targetPitchDeg = ny * LOOK_MAX_PITCH_DEG;
+  });
+}
 
 let currentYawDeg = 0;
 let currentPitchDeg = 0;

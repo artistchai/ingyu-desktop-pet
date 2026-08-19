@@ -16,7 +16,8 @@
     "electron-builder": "^24.13.3"
   },
   "dependencies": {
-    "three": "^0.165.0"
+    "three": "^0.165.0",
+    "uiohook-napi": "^1.5.4"
   },
   "build": {
     "appId": "com.chai.ingyu-desktop-pet",
@@ -34,9 +35,6 @@
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "renderer/assets/icon.icns",
-      "hardenedRuntime": true,
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
       "target": [
         {
           "target": "dmg",

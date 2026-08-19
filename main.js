@@ -94,11 +94,56 @@ app.whenReady().then(() => {
     app.dock.hide();
   }
   createWindow();
+  startGlobalMouseTracking();
   startTimerLoop();
 });
 
 app.on('window-all-closed', () => {
   app.quit();
+});
+
+// ===== 전역 마우스 위치 추적 (uiohook-napi) =====
+// 펫 창이 포커스 없어도(다른 프로그램 쓰는 중이어도) 마우스 위치를 알아야
+// "사용자 커서를 쳐다보는" 동작이 가능함. 창 자체의 mousemove로는 안 됨 —
+// 마우스가 창 밖에 있을 땐 그 이벤트 자체가 안 옴.
+//
+// 중요: macOS는 "손쉬운 사용(Accessibility)" 권한이 없으면 이 후킹 자체가
+// 실패할 수 있음. 실패해도 앱이 죽으면 안 되고, 이 기능만 빠진 채 나머지
+// (드래그, 숨쉬기 등)는 정상 작동해야 해서 try/catch로 감쌈.
+let uIOhookRef = null;
+
+function startGlobalMouseTracking() {
+  try {
+    const { uIOhook } = require('uiohook-napi');
+    uIOhookRef = uIOhook;
+
+    let lastSent = 0;
+    const THROTTLE_MS = 60; // 초당 수백 번씩 안 오게 스로틀
+
+    uIOhook.on('mousemove', (e) => {
+      const now = Date.now();
+      if (now - lastSent < THROTTLE_MS) return;
+      lastSent = now;
+      if (mainWindow) {
+        mainWindow.webContents.send('global-mouse-move', { x: e.x, y: e.y });
+      }
+    });
+
+    uIOhook.start();
+    console.log('전역 마우스 추적 시작됨');
+  } catch (err) {
+    console.error('전역 마우스 추적 실패 (맥 손쉬운사용 권한 등) — 이 기능 없이 계속 진행:', err);
+  }
+}
+
+app.on('before-quit', () => {
+  if (uIOhookRef) {
+    try {
+      uIOhookRef.stop();
+    } catch (e) {
+      // 종료 중이라 실패해도 무시
+    }
+  }
 });
 
 // ===== 뽀모도로 타이머 =====
