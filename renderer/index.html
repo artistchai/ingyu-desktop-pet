@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    @font-face {
+      font-family: 'MyPixelFont';
+      src: url('./fonts/GalmuriMono11.ttf') format('truetype');
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* 왼쪽 위, 항상 떠 있는 남은 시간 표시 */
+    #timer-badge {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      padding: 4px 10px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font-family: 'MyPixelFont', monospace;
+      font-size: 12px;
+      border-radius: 12px;
+      pointer-events: none; /* 클릭이 이 배지를 뚫고 3D 씬으로 그대로 전달되게 */
+      z-index: 10;
+      user-select: none;
+    }
+
+     /* 인규 우클릭 시 뜨는 작은 컨텍스트 메뉴 */
+    
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: opacity 0.4s ease;
+    }
+
+    #loading-overlay.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #loading-logo {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .logo-letter {
+      height: 32px;
+      width: auto;
+      image-rendering: pixelated;
+      animation: letter-float 1.6s ease-in-out infinite;
+    }
+
+    @keyframes letter-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    /* 3D 렌더러 캔버스 — 로딩 끝나기 전까지 완전히 숨겨서, 하나씩 로딩되는
+       인규/책상이 로딩 화면 뒤로 비쳐 보이지 않게 함 */
+    canvas {
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    canvas.loaded {
+      opacity: 1;
+    }
+
+    /* 인규 우클릭 시 뜨는 작은 컨텍스트 메뉴 */
+    #context-menu {
+      position: fixed;
+      z-index: 30;
+      background: #c0c0c0;
+      border: 1px solid #2b2b2b;
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+      padding: 1px;
+      transform: scale(0.75);
+      transform-origin: top left;
+    }
+
+    #context-menu button {
+      display: block;
+      width: 100%;
+      white-space: nowrap;
+      text-align: left;
+      background: transparent;
+      border: none;
+      padding: 4px 7px;
+      font-family: 'MyPixelFont', monospace;
+      font-size: 10px;
+      color: #2b2b2b;
+      cursor: pointer;
+    }
+
+    #context-menu button:hover {
+      background: #f0e4c0;
+    }
+
+    /* 인규를 클릭하면 뜨는 설정 패널 — 옛날 윈도우(95/98) 창 스타일 */
+    #settings-panel {
+      position: fixed;
+      bottom: 260px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.75);
+      width: 190px;
+      background: #c0c0c0; /* 본문 배경 — 윈도우 클래식 회색 */
+      border: 2px solid #ffffff;
+      border-right-color: #404040;
+      border-bottom-color: #404040;
+      border-radius: 0;
+      padding: 0;
+      font-family: 'MyPixelFont', monospace;
+      font-size: 11px;
+      color: #000000;
+      z-index: 20;
+      box-shadow: 1px 1px 0 #000000;
+      image-rendering: pixelated;
+    }
+
+    /* 말풍선 꼬리는 레트로 윈도우 창 스타일로 바뀌면서 제거함 */
+
+    /* 패널 맨 위, "뽀모도로 타이머" 글자 + ✕ 버튼이 있는 줄 전체 — 파란 그라데이션 타이틀바 */
+    #settings-panel .settings-title {
+      font-weight: 700;
+      margin: 0;
+      padding: 3px 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(90deg, #0000c4, #1084d0);
+      color: #ffffff;
+    }
+
+    #settings-panel .settings-title span {
+      font-size: 12px;
+      padding-left: 2px;
+    }
+
+    /* 패널 오른쪽 위 ✕(닫기) 버튼 자체 — 옛날 윈도우 각진 버튼 느낌 */
+    #settings-panel .settings-title button {
+      border: 1px solid #000000;
+      border-top-color: #ffffff;
+      border-left-color: #ffffff;
+      background: #c0c0c0;
+      font-family: 'MyPixelFont', monospace;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #000000;
+      padding: 0px 5px;
+      line-height: 1.4;
+    }
+
+    /* ✕ 버튼에 마우스 올렸을 때 */
+    #settings-panel .settings-title button:hover {
+      background: #d4d4d4;
+    }
+
+    /* 타이틀바 아래, 본문 영역(작업/휴식 시간 입력 + 버튼들)에 여백 추가 */
+    #settings-panel .settings-body {
+      padding: 8px 10px;
+    }
+
+    /* "작업 시간(분)" 줄, "휴식 시간(분)" 줄 — 라벨+입력창이 한 줄에 나란히 있는 컨테이너 */
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0px;
+    }
+
+    /* "작업 시간(분)", "휴식 시간(분)" 옆의 숫자 입력창(50, 10 적는 곳) — 안으로 파인 느낌 */
+    .settings-row input {
+      width: 56px;
+      padding: 0px 2px;
+      border: 2px solid;
+      border-top-color: #404040;
+      border-left-color: #404040;
+      border-right-color: #ffffff;
+      border-bottom-color: #ffffff;
+      border-radius: 0;
+      font-family: 'MyPixelFont', monospace;
+      font-size: 13px;
+      background: #fff;
+      color: #000000;
+    }
+
+    /* "시작"+"일시정지" 버튼, "리셋" 버튼 — 각 버튼 줄을 감싸는 컨테이너 (가로 정렬) */
+    .settings-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    /* "시작", "일시정지", "리셋" 버튼 전부 공통 스타일 — 옛날 윈도우 각진 3D 버튼 */
+    .settings-buttons button {
+      flex: 1;
+      padding: 2px 0px;
+      border: 2px solid;
+      border-top-color: #ffffff;
+      border-left-color: #ffffff;
+      border-right-color: #404040;
+      border-bottom-color: #404040;
+      border-radius: 0;
+      background: #c0c0c0;
+      color: #000000;
+      cursor: pointer;
+      font-family: 'MyPixelFont', monospace;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    /* 버튼 눌렀을 때(active) — 베벨이 반대로 눌린 느낌 */
+    .settings-buttons button:active {
+      border-top-color: #404040;
+      border-left-color: #404040;
+      border-right-color: #ffffff;
+      border-bottom-color: #ffffff;
+    }
+
+    /* 버튼이 비활성화(disabled) 상태일 때 — 예: 시작 중일 땐 "시작" 버튼이 이 스타일 */
+    .settings-buttons button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    /* "리셋" 버튼만 — class="secondary"가 붙은 버튼도 같은 톤으로 통일 */
+    .settings-buttons button.secondary {
+      background: #c0c0c0;
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "../node_modules/three/build/three.module.js",
+      "three/addons/": "../node_modules/three/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="loading-overlay">
+    <div id="loading-logo">
+      <img src="./assets/chai_C.png" alt="C" class="logo-letter" style="animation-delay: 0s;" />
+      <img src="./assets/chai_H.png" alt="H" class="logo-letter" style="animation-delay: 0.15s;" />
+      <img src="./assets/chai_A.png" alt="A" class="logo-letter" style="animation-delay: 0.3s;" />
+      <img src="./assets/chai_I.png" alt="I" class="logo-letter" style="animation-delay: 0.45s;" />
+    </div>
+  </div>
+
+  <div id="timer-badge" class="hidden"></div>
+
+  <div id="context-menu" class="hidden">
+    <button id="context-toggle-timer-text">타이머 텍스트 표시: <span id="context-toggle-state">꺼짐</span></button>
+  </div>
+
+  <div id="settings-panel" class="hidden">
+    <div class="settings-title">
+      <span>뽀모도로 타이머</span>
+      <button id="settings-close-btn">✕</button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-row">
+        <label for="work-minutes-input">작업 시간(분)</label>
+        <input type="number" id="work-minutes-input" min="1" max="180" />
+      </div>
+      <div class="settings-row" style="padding-top: 2px;">
+        <label for="break-minutes-input">휴식 시간(분)</label>
+        <input type="number" id="break-minutes-input" min="1" max="60" />
+      </div>
+      <div class="settings-buttons">
+        <button id="timer-start-btn">시작</button>
+        <button id="timer-pause-btn">일시정지</button>
+      </div>
+      <div class="settings-buttons" style="margin-top: 3px;">
+        <button id="timer-reset-btn" class="secondary">리셋</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
