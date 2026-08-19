@@ -1,8 +1,7 @@
 import * as THREE from 'three';
 window.THREE = THREE; // 콘솔에서 테스트하려고 임시로 노출
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-
+import { GLTFLoader } from './lib/GLTFLoader.js';
+import { RoomEnvironment } from './lib/RoomEnvironment.js';
 const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(
@@ -646,12 +645,23 @@ function frameGroup(margin = CAMERA_EXTRA_MARGIN) {
   camera.near = Math.max(0.01, distance / 100);
   camera.far = distance * 10;
   camera.updateProjectionMatrix();
+  console.log('카메라 디버그:', {
+    position: camera.position,
+    distance: distance,
+    center: center,
+    fitHeightDistance: fitHeightDistance,
+    fitWidthDistance: fitWidthDistance
+  });
 }
 
 loader.load(
   '../assets/furniture.glb',
   (gltf) => {
     furnitureRoot = gltf.scene;
+    const debugBox = new THREE.Box3().setFromObject(furnitureRoot);
+    const debugSize = debugBox.getSize(new THREE.Vector3());
+    const debugCenter = debugBox.getCenter(new THREE.Vector3());
+    console.log('furniture 크기:', debugSize, '중심:', debugCenter);
     window.furnitureRoot = furnitureRoot;
 
     furnitureRoot.traverse((obj) => {

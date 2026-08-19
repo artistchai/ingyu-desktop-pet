@@ -16,11 +16,11 @@
     "electron-builder": "^26.15.3"
   },
   "dependencies": {
-    "three": "^0.165.0"
+    "three": "0.150.0"
   },
   "build": {
     "appId": "com.chai.ingyu-desktop-pet",
-    "productName": "인규",
+    "productName": "Ingyu",
     "directories": {
       "output": "release"
     },
@@ -29,7 +29,12 @@
       "preload.js",
       "renderer/**/*",
       "assets/**/*",
-      "package.json"
+      "package.json",
+      "node_modules/three/**/*",
+      "!node_modules/three/examples/**/*.test.js"
+    ],
+    "asarUnpack": [
+      "node_modules/three/examples/**/*"
     ],
     "mac": {
       "category": "public.app-category.productivity",

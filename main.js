@@ -113,7 +113,27 @@ app.on('window-all-closed', () => {
 let uIOhookRef = null;
 
 function startGlobalMouseTracking() {
-  console.log('전역 마우스 추적 임시 비활성화 (크래시 원인 진단 중)');
+  try {
+    const { uIOhook } = require('uiohook-napi');
+    uIOhookRef = uIOhook;
+
+    let lastSent = 0;
+    const THROTTLE_MS = 60; // 초당 수백 번씩 안 오게 스로틀
+
+    uIOhook.on('mousemove', (e) => {
+      const now = Date.now();
+      if (now - lastSent < THROTTLE_MS) return;
+      lastSent = now;
+      if (mainWindow) {
+        mainWindow.webContents.send('global-mouse-move', { x: e.x, y: e.y });
+      }
+    });
+
+    uIOhook.start();
+    console.log('전역 마우스 추적 시작됨');
+  } catch (err) {
+    console.error('전역 마우스 추적 실패 (맥 손쉬운사용 권한 등) — 이 기능 없이 계속 진행:', err);
+  }
 }
 
 app.on('before-quit', () => {
