@@ -12,12 +12,11 @@
     "dist:win": "electron-builder --win --publish=never"
   },
   "devDependencies": {
-    "electron": "^31.0.0",
+    "electron": "31.6.0",
     "electron-builder": "^24.13.3"
   },
   "dependencies": {
-    "three": "^0.165.0",
-    "uiohook-napi": "^1.5.4"
+    "three": "^0.165.0"
   },
   "build": {
     "appId": "com.chai.ingyu-desktop-pet",
@@ -38,7 +37,10 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ]
     },
@@ -47,7 +49,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "artifactName": "인규-설치파일-Windows.${ext}"
