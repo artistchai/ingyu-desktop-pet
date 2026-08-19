@@ -657,12 +657,10 @@ function frameGroup(margin = CAMERA_EXTRA_MARGIN) {
 loader.load(
   '../assets/furniture.glb',
   (gltf) => {
-    furnitureRoot = gltf.scene;
-    const debugBox = new THREE.Box3().setFromObject(furnitureRoot);
-    const debugSize = debugBox.getSize(new THREE.Vector3());
-    const debugCenter = debugBox.getCenter(new THREE.Vector3());
-    console.log('furniture 크기:', debugSize, '중심:', debugCenter);
+furnitureRoot = gltf.scene;
     window.furnitureRoot = furnitureRoot;
+    const debugBox = new THREE.Box3().setFromObject(furnitureRoot);
+    console.log('furniture 크기:', debugBox.getSize(new THREE.Vector3()), '중심:', debugBox.getCenter(new THREE.Vector3()));
 
     furnitureRoot.traverse((obj) => {
       if (obj.isMesh) {
