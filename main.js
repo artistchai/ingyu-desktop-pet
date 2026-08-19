@@ -8,6 +8,18 @@ let mainWindow = null;
 const WIDTH = 340;
 const HEIGHT = 400;
 
+// 앱 아이콘 — OS별로 확장자가 다름(Mac: .icns, Windows: .ico).
+// 창 아이콘(BrowserWindow, Windows용)은 .ico를 그대로 쓰고,
+// macOS Dock 아이콘(app.dock.setIcon)은 .icns 로딩이 실패하는 경우가 있어
+// 더 안전한 PNG를 별도로 사용함.
+const ICON_PATH = path.join(
+  __dirname,
+  'renderer',
+  'assets',
+  process.platform === 'win32' ? 'icon.ico' : 'icon.icns'
+);
+const DOCK_ICON_PATH = path.join(__dirname, 'renderer', 'assets', 'icon_512.png');
+
 function createWindow() {
   const primaryDisplay = screen.getPrimaryDisplay();
   const { workArea } = primaryDisplay;
@@ -27,6 +39,7 @@ function createWindow() {
     resizable: false,
     skipTaskbar: true,
     backgroundThrottling: false,
+    icon: ICON_PATH, // Windows에서 창/작업표시줄 아이콘으로 사용됨
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -34,10 +47,22 @@ function createWindow() {
     },
   });
 
+  // macOS는 BrowserWindow의 icon 옵션만으로는 Dock 아이콘이 안 바뀌어서,
+  // 개발 모드(npm start)에서도 보이도록 별도로 Dock 아이콘을 지정함.
+  // 배포된 .app에서는 패키징된 아이콘(icon.icns)이 자동 적용되므로 이 코드는
+  // 주로 npm start로 개발할 때를 위한 것.
+  if (process.platform === 'darwin' && app.dock) {
+    app.dock.setIcon(DOCK_ICON_PATH);
+  }
+
   mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
+  // 개발 중(npm start)일 때만 개발자 도구를 자동으로 열고,
+  // 배포된 앱(app.isPackaged === true)에서는 사용자에게 보이지 않도록 함.
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  }
 
   // 렌더러가 완전히 로드된 다음에 첫 타이머 상태를 보내줘야
   // 창을 새로 열었을 때도 바로 정확한 시간이 표시됨.
